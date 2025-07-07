@@ -79,9 +79,8 @@ if not st.session_state.logged_in:
             st.error("❌ Invalid username or password.")
     st.stop()
 
-# --- Welcome Section ---
-st.title("📈 Employee Analytics Dashboard")
-st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
+st.markdown("<h3 style='color:#6a0dad;'>📈 Employee Analytics Dashboard</h3>", unsafe_allow_html=True)
+st.markdown(f"<h5 style='color:#333;'>Welcome <b>{st.session_state.username}</b>! Generate employee insights below.</h5>", unsafe_allow_html=True)
 
 # --- Load Data ---
 @st.cache_data
