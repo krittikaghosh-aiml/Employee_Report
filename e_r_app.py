@@ -35,7 +35,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # --- After Login ---
-st.title("📈 Employee Report Chatbot")
+st.title("📈 InsightPulse: Employee Analytics Dashboard")
 st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
 if st.button("🚪 Logout"):
     st.session_state.logged_in = False
