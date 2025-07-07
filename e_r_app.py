@@ -11,7 +11,7 @@ USERS = {
 }
 
 # --- Page Config ---
-st.set_page_config(page_title="📊 Employee Report", layout="centered")
+st.set_page_config(page_title="InsightPulse: Employee Analytics Dashboard", layout="centered",page_icon="📊")
 
 # --- Session State ---
 if "logged_in" not in st.session_state:
