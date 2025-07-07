@@ -38,7 +38,7 @@ if not st.session_state.logged_in:
 
 # === After Login: Main Dashboard ===
 st.title("📈 Employee Report Chatbot")
-st.caption(f"Welcome **{username}**! Generate smart employee insights below.")
+st.caption(f"Generate smart employee insights below.")
 
 # === Load CSV from Local ===
 try:
