@@ -56,7 +56,7 @@ if "logged_in" not in st.session_state:
 
 # --- Login Page ---
 if not st.session_state.logged_in:
-    st.title("🔐 Login to Access Employee Reports")
+    st.markdown("<h4 style='color:#6a0dad;'>🔐 Login to Access Employee Reports</h4>", unsafe_allow_html=True)
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
