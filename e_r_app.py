@@ -12,6 +12,53 @@ USERS = {
 
 # --- Page Config ---
 st.set_page_config(page_title="InsightPulse: Employee Analytics Dashboard", layout="centered",page_icon="📊")
+# Top-Center Logout Button
+logout_center = st.columns([4, 1, 4])
+with logout_center[1]:
+    if st.button("🚪 Logout"):
+        for key in st.session_state.keys():
+            st.session_state[key] = False
+        st.rerun()
+# ========== UI STYLING ==========
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    body {
+        background-color: #e6ccff;
+        color: #2c3e50;
+    }
+
+    div.stButton > button {
+        background-color: #6a0dad;
+        color: white;
+        padding: 10px 30px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        transition: all 0.3s ease-in-out;
+        animation: pulse 2s infinite;
+        white-space: nowrap;
+    }
+
+    div.stButton > button:hover {
+        background-color: #5c0099;
+        transform: scale(1.05);
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(106, 13, 173, 0.5); }
+        70% { box-shadow: 0 0 0 10px rgba(106, 13, 173, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(106, 13, 173, 0); }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ========== APP HEADER ==========
+st.markdown("<h1 style='text-align: center; color: #6a0dad;'>🤖 InsightPulse ✨</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #333;'> 🪄</h4>", unsafe_allow_html=True)
 
 # --- Session State ---
 if "logged_in" not in st.session_state:
@@ -158,3 +205,38 @@ if fig:
 else:
     st.warning("⚠️ Chart could not be generated.")
 
+# ========== FOOTER ==========
+st.markdown("""
+    <style>
+    @keyframes glow {
+        0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+        50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
+        100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .footer-left-animated {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #6a0dad;
+        border-top-right-radius: 12px;
+        animation: glow 3s ease-in-out infinite;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
+    </style>
+    <div class="footer-left-animated">
+        <span class="emoji">👩‍💻</span>
+        Created by <b> Krittika Ghosh</b>
+    </div>
+""", unsafe_allow_html=True)
