@@ -4,35 +4,43 @@ import plotly.express as px
 
 # === Hardcoded Users ===
 USERS = {
-    "KG": "kg123",
-    "SG": "sg123"
+    "admin": "admin123",
+    "hruser": "hr2025",
+    "analyst": "insights"
 }
 
-# === Authentication ===
+# === Page Configuration ===
 st.set_page_config(page_title="📊 Secure Employee Report", layout="centered")
 
+# === Session Initialization ===
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# === Login Screen ===
 if not st.session_state.logged_in:
     st.title("🔐 Login to Access Employee Reports")
 
     username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    show_pass = st.checkbox("Show Password", value=False)
+    password = st.text_input("Password", type="default" if show_pass else "password")
 
-    if st.button("Login"):
+    login_button = st.button("Login")
+
+    if login_button:
         if username in USERS and USERS[username] == password:
-            st.success("✅ Login successful!")
             st.session_state.logged_in = True
+            st.success("✅ Login successful! Reloading...")
+            st.experimental_rerun()
         else:
             st.error("❌ Invalid username or password.")
+    
     st.stop()
 
-# === Secure Section After Login ===
+# === After Login: Main Dashboard ===
 st.title("📈 Employee Report Chatbot")
-st.write("Analyze employee data securely and interactively.")
+st.caption(f"Welcome **{username}**! Generate smart employee insights below.")
 
-# === Load Static CSV (Cached for All Streamlit Versions) ===
+# === Load CSV from Local ===
 try:
     @st.cache_data
     def load_data():
@@ -44,11 +52,11 @@ except:
 
 df = load_data()
 
-# === Optional Data Preview ===
+# === Toggle: Show Data Table ===
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# === Report Type & Chart Options ===
+# === Select Report and Chart ===
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -60,7 +68,7 @@ report_type = st.selectbox("📌 Select Report Type", [
 
 chart_type = st.selectbox("📊 Select Chart Type", ["Bar", "Pie", "Line", "Scatter"])
 
-# === Generate Chart ===
+# === Generate Report Chart ===
 def generate_chart(report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -90,10 +98,10 @@ def generate_chart(report_type, chart_type):
 
     return None
 
-# === Show Chart ===
+# === Show Final Chart ===
 st.subheader("📊 Generated Report")
 fig = generate_chart(report_type, chart_type)
 if fig:
     st.plotly_chart(fig)
 else:
-    st.warning("⚠️ Please check your selections.")
+    st.warning("⚠️ Chart could not be generated. Please check your selections or data.")
