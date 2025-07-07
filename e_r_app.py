@@ -27,8 +27,9 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.logged_in = True
+            st.session_state.username = username  # ✅ Store username
             st.success("✅ Login successful! Reloading...")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid username or password.")
     st.stop()
@@ -37,15 +38,10 @@ if not st.session_state.logged_in:
 st.title("📈 Employee Report Chatbot")
 st.caption(f"Generate employee insights below.")
 
-# --- Load CSV with Compatibility ---
-try:
-    @st.cache_data
-    def load_data():
-        return pd.read_csv("enhanced_employee_data.csv")
-except:
-    @st.cache
-    def load_data():
-        return pd.read_csv("enhanced_employee_data.csv")
+# --- Load CSV ---
+@st.cache_data
+def load_data():
+    return pd.read_csv("enhanced_employee_data.csv")
 
 df = load_data()
 
@@ -63,7 +59,6 @@ report_type = st.selectbox("📌 Select Report Type", [
     "Leaves Taken vs Attendance"
 ])
 
-# Chart options dynamically change based on report
 chart_options = {
     "Gender Distribution": ["Pie", "Bar"],
     "Age vs Performance": ["Line", "Scatter", "Bubble"],
@@ -74,7 +69,7 @@ chart_options = {
 }
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Chart Generation ---
+# --- Chart Generator ---
 def generate_chart(report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -98,15 +93,27 @@ def generate_chart(report_type, chart_type):
 
     elif report_type == "Join Date Trend":
         df['JoinDate'] = pd.to_datetime(df['JoinDate'])
-        if chart_type == "Histogram":
-            return px.histogram(df, x=df['JoinDate'].dt.month_name(), title="Join Month Distribution")
+        df['JoinMonth'] = df['JoinDate'].dt.to_period('M').astype(str)
+        data = df['JoinMonth'].value_counts().reset_index()
+        data.columns = ['JoinMonth', 'Count']
+        data = data.sort_values(by='JoinMonth')
+
+        if chart_type == "Line":
+            return px.line(data, x='JoinMonth', y='Count', markers=True)
+        elif chart_type == "Bar":
+            return px.bar(data, x='JoinMonth', y='Count')
         else:
-            data = df['JoinDate'].dt.to_period('M').astype(str).value_counts().sort_index().reset_index()
-            data.columns = ['JoinMonth', 'Count']
-            return px.line(data, x='JoinMonth', y='Count') if chart_type == "Line" else px.bar(data, x='JoinMonth', y='Count')
+            return px.histogram(df, x=df['JoinDate'].dt.month_name())
 
     elif report_type == "Experience vs Projects":
-        return px.scatter(df, x='Experience (Years)', y='ProjectsCompleted', color='Department') if chart_type == "Scatter" else px.bar(df, x='Experience (Years)', y='ProjectsCompleted', color='JobRole')
+        df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
+        df_sorted = df.sort_values(by='Experience (Years)')
+        if chart_type == "Scatter":
+            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
+                              color='Department', hover_name='Name')
+        else:
+            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
+                          color='JobRole', hover_name='Name')
 
     elif report_type == "Leaves Taken vs Attendance":
         if chart_type == "Heatmap":
@@ -123,11 +130,18 @@ def generate_chart(report_type, chart_type):
             except:
                 st.warning("⚠️ Heatmap failed due to missing or irregular data.")
                 return None
-        elif chart_type == "Scatter":
-            return px.scatter(df, x='LeavesTaken', y='Attendance (%)', color='Name')
-        else:
-            df_sorted = df.sort_values(by='LeavesTaken')
-            return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name')
+
+        df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
+        df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
+        df = df.dropna(subset=['LeavesTaken', 'Attendance (%)'])
+
+        df_sorted = df.sort_values(by=['Name', 'LeavesTaken'])
+
+        if chart_type == "Scatter":
+            return px.scatter(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name')
+        else:  # Line Chart (Fixed)
+            return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)',
+                           color='Name', markers=True, line_group='Name')
 
     return None
 
