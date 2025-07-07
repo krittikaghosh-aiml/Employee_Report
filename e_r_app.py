@@ -3,17 +3,17 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 
-# --- Users ---
+# --- User Credentials ---
 USERS = {
     "admin": "admin123",
     "hruser": "hr2025",
     "analyst": "insights"
 }
 
-# --- Page Setup ---
-st.set_page_config(page_title="📊 Secure Employee Report", layout="centered")
+# --- Page Config ---
+st.set_page_config(page_title="📊 Employee Report", layout="centered")
 
-# --- Session State Init ---
+# --- Session State ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -23,13 +23,13 @@ if not st.session_state.logged_in:
     username = st.text_input("Username")
     show_pass = st.checkbox("Show Password", value=False)
     password = st.text_input("Password", type="default" if show_pass else "password")
-    
+
     if st.button("Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.logged_in = True
-            st.session_state.username = username  # ✅ store username for later use
+            st.session_state.username = username
             st.success("✅ Login successful! Reloading...")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("❌ Invalid username or password.")
     st.stop()
@@ -38,18 +38,18 @@ if not st.session_state.logged_in:
 st.title("📈 Employee Report Chatbot")
 st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
 
-# --- Load CSV ---
+# --- Load Data ---
 @st.cache_data
 def load_data():
     return pd.read_csv("enhanced_employee_data.csv")
 
 df = load_data()
 
-# --- Optional Data Preview ---
+# --- Show Data Option ---
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# --- Report + Chart Selection ---
+# --- Report and Chart Type Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -67,10 +67,11 @@ chart_options = {
     "Experience vs Projects": ["Bar", "Scatter"],
     "Leaves Taken vs Attendance": ["Line", "Scatter", "Heatmap"]
 }
+
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Chart Generator ---
-def generate_chart(report_type, chart_type):
+# --- Generate Chart Function ---
+def generate_chart(df, report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
         data.columns = ['Gender', 'Count']
@@ -94,26 +95,27 @@ def generate_chart(report_type, chart_type):
     elif report_type == "Join Date Trend":
         df['JoinDate'] = pd.to_datetime(df['JoinDate'], errors='coerce')
         df = df.dropna(subset=['JoinDate'])
-
         df['JoinMonth'] = df['JoinDate'].dt.to_period('M').astype(str)
         data = df['JoinMonth'].value_counts().reset_index()
         data.columns = ['JoinMonth', 'Count']
         data = data.sort_values(by='JoinMonth')
 
-        if chart_type == "Histogram":
-            return px.histogram(df, x=df['JoinDate'].dt.month_name(), title="Join Month Distribution")
-        elif chart_type == "Line":
+        if chart_type == "Line":
             return px.line(data, x='JoinMonth', y='Count', markers=True)
-        else:
+        elif chart_type == "Bar":
             return px.bar(data, x='JoinMonth', y='Count')
+        else:
+            return px.histogram(df, x=df['JoinDate'].dt.month_name())
 
     elif report_type == "Experience vs Projects":
         df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
         df_sorted = df.sort_values(by='Experience (Years)')
         if chart_type == "Scatter":
-            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='Department')
+            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
+                              color='Department', hover_name='Name')
         else:
-            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='JobRole')
+            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
+                          color='JobRole', hover_name='Name')
 
     elif report_type == "Leaves Taken vs Attendance":
         df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
@@ -144,10 +146,11 @@ def generate_chart(report_type, chart_type):
 
     return None
 
-# --- Show Chart ---
+# --- Display Chart ---
 st.subheader("📊 Generated Report")
-fig = generate_chart(report_type, chart_type)
+fig = generate_chart(df, report_type, chart_type)
 if fig:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("⚠️ Chart could not be generated.")
+
