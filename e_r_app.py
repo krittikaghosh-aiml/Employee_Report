@@ -45,7 +45,12 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
+logout_center = st.columns([4, 1, 4])
+with logout_center[1]:
+    if st.button("🚪 Logout", key="logout_top"):
+        for key in st.session_state.keys():
+            st.session_state[key] = False
+        st.rerun()
 # --- Header Title ---
 st.markdown("<h1 style='text-align: center; color: #6a0dad;'>🤖 InsightPulse ✨</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #333;'>HR + Analytics + Visual Insights</h4>", unsafe_allow_html=True)
@@ -73,12 +78,7 @@ if not st.session_state.logged_in:
 st.markdown("<h3 style='color:#6a0dad;'>📈 Employee Analytics Dashboard</h3>", unsafe_allow_html=True)
 st.markdown(f"<h5 style='color:#333;'>Welcome <b>{st.session_state.username}</b>! Generate employee insights below.</h5>", unsafe_allow_html=True)
 # Place logout inside "after login"
-logout_center = st.columns([4, 1, 4])
-with logout_center[1]:
-    if st.button("🚪 Logout", key="logout_top"):
-        for key in st.session_state.keys():
-            st.session_state[key] = False
-        st.rerun()
+
 # --- Load Data ---
 @st.cache_data
 def load_data():
