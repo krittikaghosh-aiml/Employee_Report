@@ -11,26 +11,26 @@ USERS = {
 }
 
 # --- Page Config ---
-st.set_page_config(page_title="InsightPulse: Employee Analytics Dashboard", layout="centered",page_icon="📊")
-# Top-Center Logout Button
+st.set_page_config(page_title="InsightPulse: Employee Analytics Dashboard", layout="centered", page_icon="📊")
+
+# --- Top-Center Logout Button ---
 logout_center = st.columns([4, 1, 4])
 with logout_center[1]:
-    if st.button("🚪 Logout"):
+    if st.button("🚪 Logout", key="logout_top"):
         for key in st.session_state.keys():
             st.session_state[key] = False
         st.rerun()
-# ========== UI STYLING ==========
+
+# --- UI STYLING ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-
     body {
         background-color: #e6ccff;
         color: #2c3e50;
     }
-
     div.stButton > button {
         background-color: #6a0dad;
         color: white;
@@ -42,12 +42,10 @@ st.markdown("""
         animation: pulse 2s infinite;
         white-space: nowrap;
     }
-
     div.stButton > button:hover {
         background-color: #5c0099;
         transform: scale(1.05);
     }
-
     @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(106, 13, 173, 0.5); }
         70% { box-shadow: 0 0 0 10px rgba(106, 13, 173, 0); }
@@ -56,9 +54,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ========== APP HEADER ==========
+# --- Header Title ---
 st.markdown("<h1 style='text-align: center; color: #6a0dad;'>🤖 InsightPulse ✨</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #333;'> 🪄</h4>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #333;'>HR + Analytics + Visual Insights</h4>", unsafe_allow_html=True)
 
 # --- Session State ---
 if "logged_in" not in st.session_state:
@@ -81,10 +79,10 @@ if not st.session_state.logged_in:
             st.error("❌ Invalid username or password.")
     st.stop()
 
-# --- After Login ---
-st.title("📈 InsightPulse: Employee Analytics Dashboard")
+# --- Welcome Section ---
+st.title("📈 Employee Analytics Dashboard")
 st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
-if st.button("🚪 Logout"):
+if st.button("🚪 Logout", key="logout_main"):
     st.session_state.logged_in = False
     st.session_state.username = None
     st.rerun()
@@ -100,7 +98,7 @@ df = load_data()
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# --- Report and Chart Type Selection ---
+# --- Report and Chart Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -172,7 +170,6 @@ def generate_chart(df, report_type, chart_type):
         df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
         df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
         df = df.dropna(subset=['LeavesTaken', 'Attendance (%)'])
-
         df_sorted = df.sort_values(by=['Name', 'LeavesTaken'])
 
         if chart_type == "Heatmap":
@@ -205,7 +202,7 @@ if fig:
 else:
     st.warning("⚠️ Chart could not be generated.")
 
-# ========== FOOTER ==========
+# --- Footer Animation ---
 st.markdown("""
     <style>
     @keyframes glow {
@@ -237,6 +234,8 @@ st.markdown("""
     </style>
     <div class="footer-left-animated">
         <span class="emoji">👩‍💻</span>
-        Created by <b> Krittika Ghosh</b>
+        Created by <b>Krittika Ghosh</b>
     </div>
 """, unsafe_allow_html=True)
+
+
