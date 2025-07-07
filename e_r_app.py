@@ -35,7 +35,7 @@ if not st.session_state.logged_in:
 
 # --- After Login ---
 st.title("📈 Employee Report Chatbot")
-st.caption(f"Generate employee insights below.")
+st.caption(f"Welcome **{username}**! Generate employee insights below.")
 
 # --- Load CSV with Compatibility ---
 try:
@@ -63,7 +63,7 @@ report_type = st.selectbox("📌 Select Report Type", [
     "Leaves Taken vs Attendance"
 ])
 
-# Dynamic chart type options based on report
+# Chart options dynamically change based on report
 chart_options = {
     "Gender Distribution": ["Pie", "Bar"],
     "Age vs Performance": ["Line", "Scatter", "Bubble"],
@@ -74,7 +74,7 @@ chart_options = {
 }
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Generate Chart ---
+# --- Chart Generation ---
 def generate_chart(report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -83,8 +83,11 @@ def generate_chart(report_type, chart_type):
 
     elif report_type == "Age vs Performance":
         df_sorted = df.sort_values(by='Age')
-        if chart_type in ["Scatter", "Bubble"]:
-            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender', size='ProjectsCompleted')
+        if chart_type == "Bubble":
+            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender',
+                              size='ProjectsCompleted', opacity=0.6, hover_name='Name')
+        elif chart_type == "Scatter":
+            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender')
         else:
             return px.line(df_sorted, x='Age', y='Performance', color='Gender')
 
@@ -96,9 +99,9 @@ def generate_chart(report_type, chart_type):
     elif report_type == "Join Date Trend":
         df['JoinDate'] = pd.to_datetime(df['JoinDate'])
         if chart_type == "Histogram":
-            return px.histogram(df, x=df['JoinDate'].dt.month_name())
+            return px.histogram(df, x=df['JoinDate'].dt.month_name(), title="Join Month Distribution")
         else:
-            data = df['JoinDate'].dt.to_period('M').value_counts().sort_index().reset_index()
+            data = df['JoinDate'].dt.to_period('M').astype(str).value_counts().sort_index().reset_index()
             data.columns = ['JoinMonth', 'Count']
             return px.line(data, x='JoinMonth', y='Count') if chart_type == "Line" else px.bar(data, x='JoinMonth', y='Count')
 
@@ -118,20 +121,20 @@ def generate_chart(report_type, chart_type):
                 )
                 return fig
             except:
-                st.warning("⚠️ Cannot generate heatmap due to missing data or incorrect structure.")
+                st.warning("⚠️ Heatmap failed due to missing or irregular data.")
                 return None
         elif chart_type == "Scatter":
             return px.scatter(df, x='LeavesTaken', y='Attendance (%)', color='Name')
         else:
-            return px.line(df, x='LeavesTaken', y='Attendance (%)', color='Name')
+            df_sorted = df.sort_values(by='LeavesTaken')
+            return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name')
 
     return None
 
-# --- Display Chart ---
+# --- Show Chart ---
 st.subheader("📊 Generated Report")
 fig = generate_chart(report_type, chart_type)
 if fig:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("⚠️ Chart could not be generated.")
-
