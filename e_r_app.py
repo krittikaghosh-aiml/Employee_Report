@@ -29,7 +29,7 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.session_state.username = username  # ✅ store username for later use
             st.success("✅ Login successful! Reloading...")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Invalid username or password.")
     st.stop()
