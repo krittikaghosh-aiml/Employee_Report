@@ -35,7 +35,7 @@ if not st.session_state.logged_in:
 
 # --- After Login ---
 st.title("📈 Employee Report Chatbot")
-st.caption(f"Welcome **{username}**! Generate employee insights below.")
+st.caption(f"Generate employee insights below.")
 
 # --- Load CSV with Compatibility ---
 try:
