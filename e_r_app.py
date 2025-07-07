@@ -58,7 +58,6 @@ if "logged_in" not in st.session_state:
 if not st.session_state.logged_in:
     st.title("🔐 Login to Access Employee Reports")
     username = st.text_input("Username")
-    show_pass = st.checkbox("Show Password", value=False)
     password = st.text_input("Password", type="default" if show_pass else "password")
 
     if st.button("Login"):
