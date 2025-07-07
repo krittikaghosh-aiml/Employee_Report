@@ -27,16 +27,16 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.logged_in = True
-            st.session_state.username = username  # ✅ Store username
+            st.session_state.username = username  # ✅ store username for later use
             st.success("✅ Login successful! Reloading...")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("❌ Invalid username or password.")
     st.stop()
 
 # --- After Login ---
 st.title("📈 Employee Report Chatbot")
-st.caption(f"Generate employee insights below.")
+st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
 
 # --- Load CSV ---
 @st.cache_data
@@ -92,30 +92,36 @@ def generate_chart(report_type, chart_type):
         return px.bar(data, x='WorkMode', y='Count', color='WorkMode') if chart_type == "Bar" else px.pie(data, names='WorkMode', values='Count')
 
     elif report_type == "Join Date Trend":
-        df['JoinDate'] = pd.to_datetime(df['JoinDate'])
+        df['JoinDate'] = pd.to_datetime(df['JoinDate'], errors='coerce')
+        df = df.dropna(subset=['JoinDate'])
+
         df['JoinMonth'] = df['JoinDate'].dt.to_period('M').astype(str)
         data = df['JoinMonth'].value_counts().reset_index()
         data.columns = ['JoinMonth', 'Count']
         data = data.sort_values(by='JoinMonth')
 
-        if chart_type == "Line":
+        if chart_type == "Histogram":
+            return px.histogram(df, x=df['JoinDate'].dt.month_name(), title="Join Month Distribution")
+        elif chart_type == "Line":
             return px.line(data, x='JoinMonth', y='Count', markers=True)
-        elif chart_type == "Bar":
-            return px.bar(data, x='JoinMonth', y='Count')
         else:
-            return px.histogram(df, x=df['JoinDate'].dt.month_name())
+            return px.bar(data, x='JoinMonth', y='Count')
 
     elif report_type == "Experience vs Projects":
         df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
         df_sorted = df.sort_values(by='Experience (Years)')
         if chart_type == "Scatter":
-            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
-                              color='Department', hover_name='Name')
+            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='Department')
         else:
-            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
-                          color='JobRole', hover_name='Name')
+            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='JobRole')
 
     elif report_type == "Leaves Taken vs Attendance":
+        df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
+        df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
+        df = df.dropna(subset=['LeavesTaken', 'Attendance (%)'])
+
+        df_sorted = df.sort_values(by=['Name', 'LeavesTaken'])
+
         if chart_type == "Heatmap":
             try:
                 z = df.pivot_table(index='LeavesTaken', columns='Name', values='Attendance (%)')
@@ -130,18 +136,11 @@ def generate_chart(report_type, chart_type):
             except:
                 st.warning("⚠️ Heatmap failed due to missing or irregular data.")
                 return None
-
-        df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
-        df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
-        df = df.dropna(subset=['LeavesTaken', 'Attendance (%)'])
-
-        df_sorted = df.sort_values(by=['Name', 'LeavesTaken'])
-
-        if chart_type == "Scatter":
+        elif chart_type == "Scatter":
             return px.scatter(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name')
-        else:  # Line Chart (Fixed)
+        else:
             return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)',
-                           color='Name', markers=True, line_group='Name')
+                           color='Name', line_group='Name', markers=True)
 
     return None
 
