@@ -37,6 +37,10 @@ if not st.session_state.logged_in:
 # --- After Login ---
 st.title("📈 Employee Report Chatbot")
 st.caption(f"Welcome **{st.session_state.username}**! Generate employee insights below.")
+if st.button("🚪 Logout"):
+    st.session_state.logged_in = False
+    st.session_state.username = None
+    st.rerun()
 
 # --- Load Data ---
 @st.cache_data
