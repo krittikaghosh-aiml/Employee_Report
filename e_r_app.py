@@ -1,46 +1,43 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.figure_factory as ff
 
-# === Hardcoded Users ===
+# --- Users ---
 USERS = {
     "admin": "admin123",
     "hruser": "hr2025",
     "analyst": "insights"
 }
 
-# === Page Configuration ===
+# --- Page Setup ---
 st.set_page_config(page_title="📊 Secure Employee Report", layout="centered")
 
-# === Session Initialization ===
+# --- Session State Init ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# === Login Screen ===
+# --- Login Page ---
 if not st.session_state.logged_in:
     st.title("🔐 Login to Access Employee Reports")
-
     username = st.text_input("Username")
     show_pass = st.checkbox("Show Password", value=False)
     password = st.text_input("Password", type="default" if show_pass else "password")
-
-    login_button = st.button("Login")
-
-    if login_button:
+    
+    if st.button("Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.logged_in = True
             st.success("✅ Login successful! Reloading...")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("❌ Invalid username or password.")
-    
     st.stop()
 
-# === After Login: Main Dashboard ===
+# --- After Login ---
 st.title("📈 Employee Report Chatbot")
-st.caption(f"Generate smart employee insights below.")
+st.caption(f"Welcome **{username}**! Generate employee insights below.")
 
-# === Load CSV from Local ===
+# --- Load CSV with Compatibility ---
 try:
     @st.cache_data
     def load_data():
@@ -52,11 +49,11 @@ except:
 
 df = load_data()
 
-# === Toggle: Show Data Table ===
+# --- Optional Data Preview ---
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# === Select Report and Chart ===
+# --- Report + Chart Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -66,9 +63,18 @@ report_type = st.selectbox("📌 Select Report Type", [
     "Leaves Taken vs Attendance"
 ])
 
-chart_type = st.selectbox("📊 Select Chart Type", ["Bar", "Pie", "Line", "Scatter"])
+# Dynamic chart type options based on report
+chart_options = {
+    "Gender Distribution": ["Pie", "Bar"],
+    "Age vs Performance": ["Line", "Scatter", "Bubble"],
+    "Work Mode Preference": ["Pie", "Bar"],
+    "Join Date Trend": ["Bar", "Line", "Histogram"],
+    "Experience vs Projects": ["Bar", "Scatter"],
+    "Leaves Taken vs Attendance": ["Line", "Scatter", "Heatmap"]
+}
+chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# === Generate Report Chart ===
+# --- Generate Chart ---
 def generate_chart(report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -77,31 +83,55 @@ def generate_chart(report_type, chart_type):
 
     elif report_type == "Age vs Performance":
         df_sorted = df.sort_values(by='Age')
-        return px.scatter(df_sorted, x='Age', y='Performance', color='Gender', size='ProjectsCompleted') if chart_type == "Scatter" else px.line(df_sorted, x='Age', y='Performance', color='Gender')
+        if chart_type in ["Scatter", "Bubble"]:
+            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender', size='ProjectsCompleted')
+        else:
+            return px.line(df_sorted, x='Age', y='Performance', color='Gender')
 
     elif report_type == "Work Mode Preference":
         data = df['WorkMode'].value_counts().reset_index()
         data.columns = ['WorkMode', 'Count']
-        return px.pie(data, names='WorkMode', values='Count') if chart_type == "Pie" else px.bar(data, x='WorkMode', y='Count', color='WorkMode')
+        return px.bar(data, x='WorkMode', y='Count', color='WorkMode') if chart_type == "Bar" else px.pie(data, names='WorkMode', values='Count')
 
     elif report_type == "Join Date Trend":
         df['JoinDate'] = pd.to_datetime(df['JoinDate'])
-        data = df['JoinDate'].dt.to_period('M').value_counts().sort_index().reset_index()
-        data.columns = ['JoinMonth', 'Count']
-        return px.line(data, x='JoinMonth', y='Count') if chart_type == "Line" else px.bar(data, x='JoinMonth', y='Count')
+        if chart_type == "Histogram":
+            return px.histogram(df, x=df['JoinDate'].dt.month_name())
+        else:
+            data = df['JoinDate'].dt.to_period('M').value_counts().sort_index().reset_index()
+            data.columns = ['JoinMonth', 'Count']
+            return px.line(data, x='JoinMonth', y='Count') if chart_type == "Line" else px.bar(data, x='JoinMonth', y='Count')
 
     elif report_type == "Experience vs Projects":
         return px.scatter(df, x='Experience (Years)', y='ProjectsCompleted', color='Department') if chart_type == "Scatter" else px.bar(df, x='Experience (Years)', y='ProjectsCompleted', color='JobRole')
 
     elif report_type == "Leaves Taken vs Attendance":
-        return px.scatter(df, x='LeavesTaken', y='Attendance (%)', color='Name') if chart_type == "Scatter" else px.line(df, x='LeavesTaken', y='Attendance (%)', color='Name')
+        if chart_type == "Heatmap":
+            try:
+                z = df.pivot_table(index='LeavesTaken', columns='Name', values='Attendance (%)')
+                fig = ff.create_annotated_heatmap(
+                    z.values,
+                    x=z.columns.tolist(),
+                    y=z.index.tolist(),
+                    annotation_text=[[f"{val:.1f}" if pd.notna(val) else '' for val in row] for row in z.values],
+                    colorscale='Blues'
+                )
+                return fig
+            except:
+                st.warning("⚠️ Cannot generate heatmap due to missing data or incorrect structure.")
+                return None
+        elif chart_type == "Scatter":
+            return px.scatter(df, x='LeavesTaken', y='Attendance (%)', color='Name')
+        else:
+            return px.line(df, x='LeavesTaken', y='Attendance (%)', color='Name')
 
     return None
 
-# === Show Final Chart ===
+# --- Display Chart ---
 st.subheader("📊 Generated Report")
 fig = generate_chart(report_type, chart_type)
 if fig:
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 else:
-    st.warning("⚠️ Chart could not be generated. Please check your selections or data.")
+    st.warning("⚠️ Chart could not be generated.")
+
