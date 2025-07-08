@@ -7,3 +7,4 @@ langchain
 faiss-cpu
 tiktoken
 langchain-openai
+chromadb
