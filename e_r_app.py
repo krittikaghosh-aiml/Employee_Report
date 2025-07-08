@@ -228,3 +228,39 @@ if fig:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("⚠️ Chart could not be generated.")
+# --- Question-Answer Generator Section ---
+import openai
+
+st.markdown("---")
+st.markdown("### 🤖 Ask Questions about the Employee Data")
+
+# You can set your key like this for local testing or use Streamlit secrets
+# openai.api_key = "your-openai-key"
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+user_question = st.text_input("💬 Ask a question:")
+
+if user_question:
+    try:
+        # Limiting to the first 50 rows for token efficiency
+        data_string = df.head(50).to_string(index=False)
+
+        prompt = f"""
+        You are a data assistant that answers questions about an employee dataset.
+        Dataset:\n{data_string}
+        Question: {user_question}
+        Answer:"""
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # or "gpt-4" if you have access
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=150
+        )
+
+        answer = response['choices'][0]['message']['content']
+        st.success(answer)
+
+    except Exception as e:
+        st.error(f"❌ Failed to answer your question. Error: {str(e)}")
