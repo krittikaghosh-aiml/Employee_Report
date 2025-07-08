@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import os
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain.chains import RetrievalQA
