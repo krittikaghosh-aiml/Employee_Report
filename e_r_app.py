@@ -128,6 +128,8 @@ df = load_data()
 
 # --- Show Data Option ---
 #HERE THE DATA TABLE CAN BE GIVEN
+if st.checkbox("📋 Show Employee Data Table"):
+    st.dataframe(df)
 
 # --- Report Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
