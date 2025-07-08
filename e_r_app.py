@@ -65,7 +65,7 @@ if not st.session_state.logged_in:
         else:
             st.error("❌ Invalid username or password.")
 
-    # --- Footer shown on Login page too ---
+    # --- Footer on Login Page ---
     st.markdown("""
         <style>
         @keyframes glow {
@@ -100,15 +100,15 @@ if not st.session_state.logged_in:
             Created by <b>Krittika Ghosh</b>
         </div>
     """, unsafe_allow_html=True)
-
     st.stop()
 
 # --- Logout Button (Only After Login) ---
 logout_center = st.columns([4, 1, 4])
 with logout_center[1]:
     if st.button("🚪 Logout", key="logout_top"):
-        for key in st.session_state.keys():
-            st.session_state[key] = False
+        st.session_state.logged_in = False
+        if "username" in st.session_state:
+            del st.session_state["username"]
         st.rerun()
 
 # --- Header After Login ---
@@ -151,7 +151,7 @@ chart_options = {
 
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Chart Generation ---
+# --- Chart Generation Function ---
 def generate_chart(df, report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -228,6 +228,44 @@ if fig:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("⚠️ Chart could not be generated.")
+
+# --- Footer (Visible Everywhere) ---
+st.markdown("""
+    <style>
+    @keyframes glow {
+        0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+        50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
+        100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .footer-left-animated {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #6a0dad;
+        border-top-right-radius: 12px;
+        animation: glow 3s ease-in-out infinite;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
+    </style>
+    <div class="footer-left-animated">
+        <span class="emoji">👩‍💻</span>
+        Created by <b>Krittika Ghosh</b>
+    </div>
+""", unsafe_allow_html=True)
+
+    
 # --- Question-Answer Generator Section ---
 import openai
 
