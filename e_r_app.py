@@ -269,36 +269,69 @@ st.markdown("""
 # --- Question-Answer Generator Section ---
 import openai
 
+openai.api_key = os.getenv("OPENAI_API_KEY")  # Make sure this is set in Streamlit secrets or your environment
+
+# --- Q&A Section ---
 st.markdown("---")
-st.markdown("### 🤖 Ask Questions about the Employee Data")
+st.markdown("<h3 style='color:#6a0dad;'>🤖 Ask InsightPulse</h3>", unsafe_allow_html=True)
+st.markdown("<p style='color:#444;'>Got questions about the employee data? Ask anything below!</p>", unsafe_allow_html=True)
 
-# You can set your key like this for local testing or use Streamlit secrets
-# openai.api_key = "your-openai-key"
+# Sample question dropdown
+sample_questions = [
+    "What is the average attendance of employees?",
+    "How many employees prefer remote work?",
+    "Who has the highest performance score?",
+    "What is the gender distribution?",
+    "Which department has the most experienced employees?"
+]
+selected_question = st.selectbox("💡 Sample Questions (or ask your own below)", options=[""] + sample_questions)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Question input field
+user_question = st.text_input("Your Question", value=selected_question if selected_question else "")
 
-user_question = st.text_input("💬 Ask a question:")
+# Custom styled animated ask button
+st.markdown("""
+    <style>
+    .ask-button > button {
+        background-color: #b57edc !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 10px;
+        padding: 10px 25px;
+        font-size: 16px;
+        animation: glowBtn 2s infinite;
+        transition: transform 0.2s ease-in-out;
+    }
+    .ask-button > button:hover {
+        background-color: #a05cd6 !important;
+        transform: scale(1.05);
+    }
+    @keyframes glowBtn {
+        0% { box-shadow: 0 0 5px #d5aaff, 0 0 10px #d5aaff; }
+        50% { box-shadow: 0 0 15px #d5aaff, 0 0 20px #b57edc; }
+        100% { box-shadow: 0 0 5px #d5aaff, 0 0 10px #d5aaff; }
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-if user_question:
-    try:
-        # Limiting to the first 50 rows for token efficiency
-        data_string = df.head(50).to_string(index=False)
+ask_col = st.columns([4, 2, 4])
+with ask_col[1]:
+    ask = st.button("🔍 Ask", key="ask_button", type="primary")
 
-        prompt = f"""
-        You are a data assistant that answers questions about an employee dataset.
-        Dataset:\n{data_string}
-        Question: {user_question}
-        Answer:"""
+# Q&A logic
+if ask and user_question.strip() != "":
+    with st.spinner("Thinking... 🤔"):
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are an assistant answering questions based only on an employee dataset."},
+                    {"role": "user", "content": user_question}
+                ]
+            )
+            answer = response.choices[0].message.content.strip()
+            st.success("✅ Answer:")
+            st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px;'><b>{answer}</b></div>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"❌ Failed to answer your question. Error: {e}")
 
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",  # or "gpt-4" if you have access
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=150
-        )
-
-        answer = response.choices[0].message.content.strip()
-        st.success(answer)
-
-    except Exception as e:
-        st.error(f"❌ Failed to answer your question. Error: {str(e)}")
