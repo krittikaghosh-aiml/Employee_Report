@@ -13,7 +13,7 @@ USERS = {
 # --- Page Config ---
 st.set_page_config(page_title="InsightPulse: Employee Analytics Dashboard", layout="centered", page_icon="📊")
 
-# --- UI STYLING ---
+# --- UI Styling ---
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -45,15 +45,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-logout_center = st.columns([4, 1, 4])
-with logout_center[1]:
-    if st.button("🚪 Logout", key="logout_top"):
-        for key in st.session_state.keys():
-            st.session_state[key] = False
-        st.rerun()
-# --- Header Title ---
-st.markdown("<h1 style='text-align: center; color: #6a0dad;'>👥 InsightPulse 📈</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: center; color: #333;'>Empower your Decisions with Data-driven Employee Insights📊</h4>", unsafe_allow_html=True)
 
 # --- Session State ---
 if "logged_in" not in st.session_state:
@@ -65,7 +56,7 @@ if not st.session_state.logged_in:
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
-    if st.button("🔐Login"):
+    if st.button("🔐 Login"):
         if username in USERS and USERS[username] == password:
             st.session_state.logged_in = True
             st.session_state.username = username
@@ -73,11 +64,60 @@ if not st.session_state.logged_in:
             st.rerun()
         else:
             st.error("❌ Invalid username or password.")
+
+    # --- Footer shown on Login page too ---
+    st.markdown("""
+        <style>
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+            50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
+            100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .footer-left-animated {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #6a0dad;
+            border-top-right-radius: 12px;
+            animation: glow 3s ease-in-out infinite;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
+        </style>
+        <div class="footer-left-animated">
+            <span class="emoji">👩‍💻</span>
+            Created by <b>Krittika Ghosh</b>
+        </div>
+    """, unsafe_allow_html=True)
+
     st.stop()
 
+# --- Logout Button (Only After Login) ---
+logout_center = st.columns([4, 1, 4])
+with logout_center[1]:
+    if st.button("🚪 Logout", key="logout_top"):
+        for key in st.session_state.keys():
+            st.session_state[key] = False
+        st.rerun()
+
+# --- Header After Login ---
+st.markdown("<h1 style='text-align: center; color: #6a0dad;'>👥 InsightPulse 📈</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #333;'>Empower your Decisions with Data-driven Employee Insights 📊</h4>", unsafe_allow_html=True)
+
+# --- Subheader ---
 st.markdown("<h3 style='color:#6a0dad;'>📈 Employee Analytics Dashboard</h3>", unsafe_allow_html=True)
 st.markdown(f"<h5 style='color:#333;'>Welcome <b>{st.session_state.username}</b>! Generate employee insights below.</h5>", unsafe_allow_html=True)
-# Place logout inside "after login"
 
 # --- Load Data ---
 @st.cache_data
@@ -90,7 +130,7 @@ df = load_data()
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# --- Report and Chart Selection ---
+# --- Report Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -111,7 +151,7 @@ chart_options = {
 
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Generate Chart Function ---
+# --- Chart Generation ---
 def generate_chart(df, report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -140,7 +180,6 @@ def generate_chart(df, report_type, chart_type):
         data = df['JoinMonth'].value_counts().reset_index()
         data.columns = ['JoinMonth', 'Count']
         data = data.sort_values(by='JoinMonth')
-
         if chart_type == "Line":
             return px.line(data, x='JoinMonth', y='Count', markers=True)
         elif chart_type == "Bar":
@@ -152,18 +191,15 @@ def generate_chart(df, report_type, chart_type):
         df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
         df_sorted = df.sort_values(by='Experience (Years)')
         if chart_type == "Scatter":
-            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
-                              color='Department', hover_name='Name')
+            return px.scatter(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='Department', hover_name='Name')
         else:
-            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted',
-                          color='JobRole', hover_name='Name')
+            return px.bar(df_sorted, x='Experience (Years)', y='ProjectsCompleted', color='JobRole', hover_name='Name')
 
     elif report_type == "Leaves Taken vs Attendance":
         df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
         df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
         df = df.dropna(subset=['LeavesTaken', 'Attendance (%)'])
         df_sorted = df.sort_values(by=['Name', 'LeavesTaken'])
-
         if chart_type == "Heatmap":
             try:
                 z = df.pivot_table(index='LeavesTaken', columns='Name', values='Attendance (%)')
@@ -181,8 +217,7 @@ def generate_chart(df, report_type, chart_type):
         elif chart_type == "Scatter":
             return px.scatter(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name')
         else:
-            return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)',
-                           color='Name', line_group='Name', markers=True)
+            return px.line(df_sorted, x='LeavesTaken', y='Attendance (%)', color='Name', line_group='Name', markers=True)
 
     return None
 
@@ -193,41 +228,3 @@ if fig:
     st.plotly_chart(fig, use_container_width=True)
 else:
     st.warning("⚠️ Chart could not be generated.")
-
-# --- Footer Animation ---
-st.markdown("""
-    <style>
-    @keyframes glow {
-        0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-        50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
-        100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-    }
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-6px); }
-    }
-    .footer-left-animated {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: bold;
-        color: white;
-        background-color: #6a0dad;
-        border-top-right-radius: 12px;
-        animation: glow 3s ease-in-out infinite;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
-    </style>
-    <div class="footer-left-animated">
-        <span class="emoji">👩‍💻</span>
-        Created by <b>Krittika Ghosh</b>
-    </div>
-""", unsafe_allow_html=True)
-
-
