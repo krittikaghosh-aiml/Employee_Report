@@ -297,7 +297,7 @@ if user_question:
             max_tokens=150
         )
 
-        answer = response['choices'][0]['message']['content']
+        answer = response.choices[0].message.content.strip()
         st.success(answer)
 
     except Exception as e:
