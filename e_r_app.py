@@ -321,7 +321,7 @@ if ask and user_question.strip() != "":
     with st.spinner("Thinking... 🤔"):
         try:
             # Convert a sample of the dataset to string (limit for tokens)
-            data_sample = df.head(100).to_csv(index=False)
+            data_sample = df.to_csv(index=False)
 
             # Dynamic system prompt with embedded data
             system_prompt = f"""
