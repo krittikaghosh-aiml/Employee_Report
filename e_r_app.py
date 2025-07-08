@@ -290,7 +290,7 @@ if user_question:
         Question: {user_question}
         Answer:"""
 
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",  # or "gpt-4" if you have access
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
