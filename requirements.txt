@@ -1,10 +1,7 @@
-streamlit
-pandas 
-plotly
-scipy
-openai
-langchain==0.1.14
-langchain-community
-faiss-cpu
-tiktoken
-langchain-openai
+streamlit>=1.30.0
+pandas>=2.0.0
+plotly>=5.18.0
+faiss-cpu>=1.7.4
+langchain>=0.1.16
+langchain-openai>=0.0.8
+openai>=1.14.2
