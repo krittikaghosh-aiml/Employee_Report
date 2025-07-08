@@ -313,25 +313,41 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
+# Q & A
 ask_col = st.columns([4, 2, 4])
 with ask_col[1]:
     ask = st.button("🔍 Ask", key="ask_button", type="primary")
 
-# Q&A logic
 if ask and user_question.strip() != "":
     with st.spinner("Thinking... 🤔"):
         try:
+            # Convert a sample of the dataset to string (limit for tokens)
+            data_sample = df.head(100).to_csv(index=False)
+
+            # Dynamic system prompt with embedded data
+            system_prompt = f"""
+            You are a helpful assistant that answers questions based ONLY on the following employee dataset:
+            
+            {data_sample}
+            
+            Use this data to answer the user's question.
+            If the answer cannot be found in the data, respond with:
+            "Sorry, I don't have that information."
+            """
+
+            # Chat Completion call
             response = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an assistant answering questions based only on an employee dataset."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_question}
                 ]
             )
+
             answer = response.choices[0].message.content.strip()
             st.success("✅ Answer:")
             st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px;'><b>{answer}</b></div>", unsafe_allow_html=True)
+
         except Exception as e:
             st.error(f"❌ Failed to answer your question. Error: {e}")
 
