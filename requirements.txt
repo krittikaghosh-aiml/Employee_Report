@@ -3,8 +3,8 @@ pandas
 plotly
 scipy
 openai
-langchain
+langchain==0.1.14
+langchain-community
 faiss-cpu
 tiktoken
 langchain-openai
-chromadb
