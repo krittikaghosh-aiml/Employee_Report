@@ -3,3 +3,7 @@ pandaS
 plotly
 scipy
 openai
+langchain
+faiss-cpu
+tiktoken
+pandas
