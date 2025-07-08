@@ -3,6 +3,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import os
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.docstore.document import Document
+from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
+
 # --- User Credentials ---
 USERS = {
     "admin": "admin123",
@@ -125,6 +132,22 @@ def load_data():
     return pd.read_csv("enhanced_employee_data.csv")
 
 df = load_data()
+@st.cache_resource
+def create_vectorstore_from_csv(file_path):
+    df = pd.read_csv(file_path)
+    text_data = df.to_string(index=False)
+    documents = [Document(page_content=text_data)]
+    
+    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    docs = splitter.split_documents(documents)
+    
+    embeddings = OpenAIEmbeddings()
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    
+    return vectorstore
+
+vectorstore = create_vectorstore_from_csv("enhanced_employee_data.csv")
+
 
 # --- Show Data Option ---
 #HERE THE DATA TABLE CAN BE GIVEN
@@ -314,6 +337,13 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+def get_csv_answer(vectorstore, query):
+    retriever = vectorstore.as_retriever()
+    llm = ChatOpenAI(model="gpt-3.5-turbo")
+    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+    return qa_chain.run(query)
+
 # Q & A
 ask_col = st.columns([4, 2, 4])
 with ask_col[1]:
@@ -322,34 +352,11 @@ with ask_col[1]:
 if ask and user_question.strip() != "":
     with st.spinner("Thinking... 🤔"):
         try:
-            # Convert a sample of the dataset to string (limit for tokens)
-            data_sample = df.to_csv(index=False)
-
-            # Dynamic system prompt with embedded data
-            system_prompt = f"""
-            You are a helpful assistant that answers questions based ONLY on the following employee dataset:
-            
-            {data_sample}
-            
-            Use this data to answer the user's question.
-            If the answer cannot be found in the data, respond with:
-            "Sorry, I don't have that information."
-            """
-
-            # Chat Completion call
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_question}
-                ]
-            )
-
-            answer = response.choices[0].message.content.strip()
+            answer = get_csv_answer(vectorstore, user_question)
             st.success("✅ Answer:")
             st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px;'><b>{answer}</b></div>", unsafe_allow_html=True)
-
         except Exception as e:
             st.error(f"❌ Failed to answer your question. Error: {e}")
+
 
 
