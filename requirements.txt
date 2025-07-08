@@ -3,6 +3,6 @@ pandas
 plotly
 openai
 faiss-cpu
-langchain==0.1.14
+langchain==0.0.305
 langchain-openai==0.0.6
 pydantic==1.10.13
