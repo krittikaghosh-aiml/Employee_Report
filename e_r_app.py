@@ -318,51 +318,64 @@ ask_col = st.columns([4, 2, 4])
 with ask_col[1]:
     ask = st.button("🔍 Ask", key="ask_button", type="primary")
 
+# --- CSV-Based Question Answering ---
 def answer_from_csv(question, df):
     question = question.lower()
-    try:
-        if "average attendance" in question:
-            avg_attendance = df['Attendance (%)'].mean()
-            return f"The average attendance of employees is {avg_attendance:.2f}%."
 
-        elif "prefer remote" in question or "remote work" in question:
-            remote_count = (df['WorkMode'].str.lower() == 'remote').sum()
-            return f"{remote_count} employees prefer remote work."
+    if "average attendance" in question:
+        avg_att = df['Attendance (%)'].mean()
+        return f"The average attendance is {avg_att:.2f}%."
 
-        elif "highest performance" in question:
-            top_row = df[df['Performance'] == df['Performance'].max()]
-            name = top_row.iloc[0]['Name']
-            score = top_row.iloc[0]['Performance']
-            return f"{name} has the highest performance score of {score}."
+    elif "prefer remote" in question:
+        remote_count = (df['WorkMode'] == 'Remote').sum()
+        return f"{remote_count} employees prefer remote work."
 
-        elif "gender distribution" in question:
-            counts = df['Gender'].value_counts()
-            return ", ".join([f"{gender}: {count}" for gender, count in counts.items()])
+    elif "highest performance" in question:
+        top = df.loc[df['Performance'].idxmax()]
+        return f"{top['Name']} has the highest performance score of {top['Performance']}."
 
-        elif "most experienced" in question and "department" in question:
-            df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
-            dept_experience = df.groupby("Department")["Experience (Years)"].mean()
-            top_dept = dept_experience.idxmax()
-            top_val = dept_experience.max()
-            return f"The department with the most experienced employees is {top_dept} with an average of {top_val:.2f} years."
+    elif "gender distribution" in question:
+        counts = df['Gender'].value_counts()
+        return ', '.join([f"{gender}: {count}" for gender, count in counts.items()])
 
-        elif "oldest" in question and "youngest" in question and "male" in question and "female" in question:
-            df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
-            oldest_male = df[df['Gender'].str.lower() == 'male'].sort_values(by='Age', ascending=False).iloc[0]
-            youngest_male = df[df['Gender'].str.lower() == 'male'].sort_values(by='Age').iloc[0]
-            oldest_female = df[df['Gender'].str.lower() == 'female'].sort_values(by='Age', ascending=False).iloc[0]
-            youngest_female = df[df['Gender'].str.lower() == 'female'].sort_values(by='Age').iloc[0]
-            return (
-                f"👴 Oldest Male: {oldest_male['Name']} ({oldest_male['Age']} yrs)\n"
-                f"👦 Youngest Male: {youngest_male['Name']} ({youngest_male['Age']} yrs)\n"
-                f"👵 Oldest Female: {oldest_female['Name']} ({oldest_female['Age']} yrs)\n"
-                f"👧 Youngest Female: {youngest_female['Name']} ({youngest_female['Age']} yrs)"
-            )
+    elif "most experienced department" in question or "most experienced employees" in question:
+        df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
+        group = df.groupby('Department')['Experience (Years)'].mean().idxmax()
+        return f"The department with the most experienced employees is {group}."
 
-        else:
-            return "❓ Sorry, I couldn't understand your question or it's not supported yet."
-    except Exception as e:
-        return f"❌ Error while answering: {e}"
+    elif "oldest" in question or "youngest" in question:
+        df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
+        males = df[df['Gender'].str.lower() == 'male']
+        females = df[df['Gender'].str.lower() == 'female']
+        result = (
+            f"👨 Oldest Male: {males.loc[males['Age'].idxmax()]['Name']} ({males['Age'].max()} yrs)\n"
+            f"👨 Youngest Male: {males.loc[males['Age'].idxmin()]['Name']} ({males['Age'].min()} yrs)\n"
+            f"👩 Oldest Female: {females.loc[females['Age'].idxmax()]['Name']} ({females['Age'].max()} yrs)\n"
+            f"👩 Youngest Female: {females.loc[females['Age'].idxmin()]['Name']} ({females['Age'].min()} yrs)"
+        )
+        return result
+
+    elif "names of all employees" in question or "list of employees" in question:
+        names = df['Name'].dropna().tolist()
+        return "👥 Employees:\n" + ", ".join(names)
+
+    elif "best performing department" in question:
+        group = df.groupby('Department')['Performance'].mean()
+        best_dept = group.idxmax()
+        return f"The best performing department is {best_dept} with average score {group.max():.2f}."
+
+    elif "most active employees" in question:
+        df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
+        df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
+        active = df.sort_values(by=['LeavesTaken', 'Attendance (%)'], ascending=[True, False]).head(3)
+        return "🏆 Most active employees:\n" + ", ".join(active['Name'].tolist())
+
+    elif "gender-wise performance" in question:
+        group = df.groupby('Gender')['Performance'].mean().round(2)
+        return '\n'.join([f"{gender}: {score}" for gender, score in group.items()])
+
+    return None  # fallback to LLM
+
 
 # Q & A
 if ask and user_question.strip() != "":
