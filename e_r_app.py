@@ -318,22 +318,74 @@ ask_col = st.columns([4, 2, 4])
 with ask_col[1]:
     ask = st.button("🔍 Ask", key="ask_button", type="primary")
 
-# Q&A logic
-if ask and user_question.strip() != "":
-    with st.spinner("Thinking... 🤔"):
-        try:
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are an assistant answering questions based only on an employee dataset."},
-                    {"role": "user", "content": user_question}
-                ]
+def answer_from_csv(question, df):
+    question = question.lower()
+    try:
+        if "average attendance" in question:
+            avg_attendance = df['Attendance (%)'].mean()
+            return f"The average attendance of employees is {avg_attendance:.2f}%."
+
+        elif "prefer remote" in question or "remote work" in question:
+            remote_count = (df['WorkMode'].str.lower() == 'remote').sum()
+            return f"{remote_count} employees prefer remote work."
+
+        elif "highest performance" in question:
+            top_row = df[df['Performance'] == df['Performance'].max()]
+            name = top_row.iloc[0]['Name']
+            score = top_row.iloc[0]['Performance']
+            return f"{name} has the highest performance score of {score}."
+
+        elif "gender distribution" in question:
+            counts = df['Gender'].value_counts()
+            return ", ".join([f"{gender}: {count}" for gender, count in counts.items()])
+
+        elif "most experienced" in question and "department" in question:
+            df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
+            dept_experience = df.groupby("Department")["Experience (Years)"].mean()
+            top_dept = dept_experience.idxmax()
+            top_val = dept_experience.max()
+            return f"The department with the most experienced employees is {top_dept} with an average of {top_val:.2f} years."
+
+        elif "oldest" in question and "youngest" in question and "male" in question and "female" in question:
+            df['Age'] = pd.to_numeric(df['Age'], errors='coerce')
+            oldest_male = df[df['Gender'].str.lower() == 'male'].sort_values(by='Age', ascending=False).iloc[0]
+            youngest_male = df[df['Gender'].str.lower() == 'male'].sort_values(by='Age').iloc[0]
+            oldest_female = df[df['Gender'].str.lower() == 'female'].sort_values(by='Age', ascending=False).iloc[0]
+            youngest_female = df[df['Gender'].str.lower() == 'female'].sort_values(by='Age').iloc[0]
+            return (
+                f"👴 Oldest Male: {oldest_male['Name']} ({oldest_male['Age']} yrs)\n"
+                f"👦 Youngest Male: {youngest_male['Name']} ({youngest_male['Age']} yrs)\n"
+                f"👵 Oldest Female: {oldest_female['Name']} ({oldest_female['Age']} yrs)\n"
+                f"👧 Youngest Female: {youngest_female['Name']} ({youngest_female['Age']} yrs)"
             )
-            answer = response.choices[0].message.content.strip()
-            st.success("✅ Answer:")
-            st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px;'><b>{answer}</b></div>", unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"❌ Failed to answer your question. Error: {e}")
+
+        else:
+            return "❓ Sorry, I couldn't understand your question or it's not supported yet."
+    except Exception as e:
+        return f"❌ Error while answering: {e}"
+
+# Q & A
+if ask and user_question.strip() != "":
+    with st.spinner("Analyzing data..."):
+        # Try answering from CSV
+        answer = answer_from_csv(user_question, df)
+
+        # If CSV-based function fails to recognize
+        if "❓" in answer or "❌" in answer:
+            try:
+                gpt_response = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are an assistant helping with employee analytics. Use the employee dataset where possible."},
+                        {"role": "user", "content": user_question}
+                    ]
+                )
+                answer = gpt_response.choices[0].message.content.strip()
+            except Exception as e:
+                answer = f"❌ GPT fallback also failed: {e}"
+
+        st.success("✅ Answer:")
+        st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px; white-space: pre-wrap;'><b>{answer}</b></div>", unsafe_allow_html=True)
 
 
 
