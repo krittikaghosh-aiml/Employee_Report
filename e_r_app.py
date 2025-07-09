@@ -45,16 +45,38 @@ st.markdown("""
         70% { box-shadow: 0 0 0 10px rgba(106, 13, 173, 0); }
         100% { box-shadow: 0 0 0 0 rgba(106, 13, 173, 0); }
     }
+    .footer-left-animated {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #6a0dad;
+        border-top-right-radius: 12px;
+        animation: glow 3s ease-in-out infinite;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
     </style>
 """, unsafe_allow_html=True)
 
-def show_footer():
-    st.markdown("""
-        <div class="footer-left-animated">
-            <span class="emoji">👩‍💻</span>
-            Created by <b> Krittika Ghosh</b>
-        </div>
-    """, unsafe_allow_html=True)
+# ========= FOOTER (ALWAYS VISIBLE) ==========
+st.markdown("""
+    <div class="footer-left-animated">
+        <span class="emoji">👩‍💻</span>
+        Created by <b> Krittika Ghosh</b>
+    </div>
+""", unsafe_allow_html=True)
+    </style>
+""", unsafe_allow_html=True)
+
+
 
 # --- Session State ---
 if "logged_in" not in st.session_state:
@@ -307,7 +329,7 @@ if ask and user_question.strip() != "":
 
         st.success("✅ Answer:")
         st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px; white-space: pre-wrap;'><b>{answer}</b></div>", unsafe_allow_html=True)
-show_footer()
+
 
 
 
