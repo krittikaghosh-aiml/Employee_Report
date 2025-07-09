@@ -359,14 +359,14 @@ def answer_from_csv(question, df):
         if 'Name' not in df.columns:
             return "❌ 'Name' column not found in dataset."
 
-    names = df['Name'].dropna().astype(str).unique().tolist()
-    return (
-        "The names of all the employees in the dataset are:\n\n" +
-        "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
-    )
-
+        names = df['Name'].dropna().astype(str).unique().tolist()
+        return (
+            "The names of all the employees in the dataset are:\n\n" +
+            "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
+        )
 
     elif "best performing department" in question:
+        df['Performance'] = pd.to_numeric(df['Performance'], errors='coerce')
         group = df.groupby('Department')['Performance'].mean()
         best_dept = group.idxmax()
         return f"The best performing department is {best_dept} with average score {group.max():.2f}."
@@ -378,10 +378,12 @@ def answer_from_csv(question, df):
         return "🏆 Most active employees:\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(active['Name'])])
 
     elif "gender-wise performance" in question:
+        df['Performance'] = pd.to_numeric(df['Performance'], errors='coerce')
         group = df.groupby('Gender')['Performance'].mean().round(2)
         return '\n'.join([f"{gender}: {score}" for gender, score in group.items()])
 
     return None  # fallback to GPT
+
 
 # Q & A
 if ask and user_question.strip() != "":
