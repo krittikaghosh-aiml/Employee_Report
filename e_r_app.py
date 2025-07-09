@@ -8,7 +8,8 @@ import openai
 # --- User Credentials ---
 USERS = {
     "admin": "admin123",
-    "hruser": "hr2025",
+    "kg": "kg123",
+    "sg": "sg123",
     "analyst": "insights"
 }
 
