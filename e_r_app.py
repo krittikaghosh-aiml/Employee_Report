@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import os
+import openai
+
 # --- User Credentials ---
 USERS = {
     "admin": "admin123",
@@ -65,44 +67,9 @@ if not st.session_state.logged_in:
         else:
             st.error("❌ Invalid username or password.")
 
-    # --- Footer on Login Page ---
-    st.markdown("""
-        <style>
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-            50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
-            100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-        .footer-left-animated {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            background-color: #6a0dad;
-            border-top-right-radius: 12px;
-            animation: glow 3s ease-in-out infinite;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
-        </style>
-        <div class="footer-left-animated">
-            <span class="emoji">👩‍💻</span>
-            Created by <b>Krittika Ghosh</b>
-        </div>
-    """, unsafe_allow_html=True)
     st.stop()
 
-# --- Logout Button (Only After Login) ---
+# --- Logout Button ---
 logout_center = st.columns([4, 1, 4])
 with logout_center[1]:
     if st.button("🚪 Logout", key="logout_top"):
@@ -111,26 +78,20 @@ with logout_center[1]:
             del st.session_state["username"]
         st.rerun()
 
-# --- Header After Login ---
 st.markdown("<h1 style='text-align: center; color: #6a0dad;'>👥 InsightPulse 📈</h1>", unsafe_allow_html=True)
 st.markdown("<h4 style='text-align: center; color: #333;'>Empower your Decisions with Data-driven Employee Insights 📊</h4>", unsafe_allow_html=True)
-
-# --- Subheader ---
 st.markdown("<h3 style='color:#6a0dad;'>📈 Employee Analytics Dashboard</h3>", unsafe_allow_html=True)
 st.markdown(f"<h5 style='color:#333;'>Welcome <b>{st.session_state.username}</b>! Generate employee insights below.</h5>", unsafe_allow_html=True)
 
-# --- Load Data ---
 @st.cache_data
 def load_data():
     return pd.read_csv("enhanced_employee_data.csv")
 
 df = load_data()
 
-# --- Show Data Option ---
 if st.checkbox("📋 Show Employee Data Table"):
     st.dataframe(df)
 
-# --- Report Selection ---
 report_type = st.selectbox("📌 Select Report Type", [
     "Gender Distribution",
     "Age vs Performance",
@@ -151,7 +112,6 @@ chart_options = {
 
 chart_type = st.selectbox("📊 Select Chart Type", chart_options[report_type])
 
-# --- Chart Generation Function ---
 def generate_chart(df, report_type, chart_type):
     if report_type == "Gender Distribution":
         data = df['Gender'].value_counts().reset_index()
@@ -161,8 +121,7 @@ def generate_chart(df, report_type, chart_type):
     elif report_type == "Age vs Performance":
         df_sorted = df.sort_values(by='Age')
         if chart_type == "Bubble":
-            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender',
-                              size='ProjectsCompleted', opacity=0.6, hover_name='Name')
+            return px.scatter(df_sorted, x='Age', y='Performance', color='Gender', size='ProjectsCompleted', opacity=0.6, hover_name='Name')
         elif chart_type == "Scatter":
             return px.scatter(df_sorted, x='Age', y='Performance', color='Gender')
         else:
@@ -221,7 +180,6 @@ def generate_chart(df, report_type, chart_type):
 
     return None
 
-# --- Display Chart ---
 st.subheader("📊 Generated Report")
 fig = generate_chart(df, report_type, chart_type)
 if fig:
@@ -229,54 +187,11 @@ if fig:
 else:
     st.warning("⚠️ Chart could not be generated.")
 
-# --- Footer (Visible Everywhere) ---
-st.markdown("""
-    <style>
-    @keyframes glow {
-        0% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-        50% { box-shadow: 0 0 10px #8a2be2, 0 0 20px #8a2be2, 0 0 30px #8a2be2; }
-        100% { box-shadow: 0 0 5px #b266ff, 0 0 10px #b266ff, 0 0 15px #b266ff; }
-    }
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-6px); }
-    }
-    .footer-left-animated {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: bold;
-        color: white;
-        background-color: #6a0dad;
-        border-top-right-radius: 12px;
-        animation: glow 3s ease-in-out infinite;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
-    </style>
-    <div class="footer-left-animated">
-        <span class="emoji">👩‍💻</span>
-        Created by <b>Krittika Ghosh</b>
-    </div>
-""", unsafe_allow_html=True)
-
-    
-# --- Question-Answer Generator Section ---
-import openai
-
-openai.api_key = os.getenv("OPENAI_API_KEY")  # Make sure this is set in Streamlit secrets or your environment
-
 # --- Q&A Section ---
 st.markdown("---")
 st.markdown("<h3 style='color:#6a0dad;'>🤖 Ask InsightPulse</h3>", unsafe_allow_html=True)
 st.markdown("<p style='color:#444;'>Got questions about the employee data? Ask anything below!</p>", unsafe_allow_html=True)
 
-# Sample question dropdown
 sample_questions = [
     "What is the average attendance of employees?",
     "How many employees prefer remote work?",
@@ -285,40 +200,9 @@ sample_questions = [
     "Which department has the most experienced employees?"
 ]
 selected_question = st.selectbox("💡 Sample Questions (or ask your own below)", options=[""] + sample_questions)
-
-# Question input field
 user_question = st.text_input("Your Question", value=selected_question if selected_question else "")
+ask = st.button("🔍 Ask", key="ask_button", type="primary")
 
-# Custom styled animated ask button
-st.markdown("""
-    <style>
-    .ask-button > button {
-        background-color: #b57edc !important;
-        color: white !important;
-        font-weight: bold;
-        border-radius: 10px;
-        padding: 10px 25px;
-        font-size: 16px;
-        animation: glowBtn 2s infinite;
-        transition: transform 0.2s ease-in-out;
-    }
-    .ask-button > button:hover {
-        background-color: #a05cd6 !important;
-        transform: scale(1.05);
-    }
-    @keyframes glowBtn {
-        0% { box-shadow: 0 0 5px #d5aaff, 0 0 10px #d5aaff; }
-        50% { box-shadow: 0 0 15px #d5aaff, 0 0 20px #b57edc; }
-        100% { box-shadow: 0 0 5px #d5aaff, 0 0 10px #d5aaff; }
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-ask_col = st.columns([4, 2, 4])
-with ask_col[1]:
-    ask = st.button("🔍 Ask", key="ask_button", type="primary")
-
-# --- CSV-Based Question Answering ---
 def answer_from_csv(question, df):
     question = question.lower()
 
@@ -380,16 +264,12 @@ def answer_from_csv(question, df):
         group = df.groupby('Gender')['Performance'].mean().round(2)
         return '\n'.join([f"{gender}: {score}" for gender, score in group.items()])
 
-    return None  # fallback to GPT
+    return None
 
-
-
-# Q & A
 if ask and user_question.strip() != "":
     with st.spinner("Analyzing data..."):
         answer = answer_from_csv(user_question, df)
 
-        # GPT fallback only if CSV logic fails (None)
         if answer is None:
             try:
                 gpt_response = openai.chat.completions.create(
@@ -405,6 +285,7 @@ if ask and user_question.strip() != "":
 
         st.success("✅ Answer:")
         st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px; white-space: pre-wrap;'><b>{answer}</b></div>", unsafe_allow_html=True)
+
 
 
 
