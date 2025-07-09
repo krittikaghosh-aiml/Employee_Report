@@ -299,6 +299,13 @@ if ask and user_question.strip() != "":
 
         st.success("✅ Answer:")
         st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px; white-space: pre-wrap;'><b>{answer}</b></div>", unsafe_allow_html=True)
+def show_footer():
+    st.markdown("""
+        <div class="footer-left-animated">
+            <span class="emoji">👩‍💻</span>
+            Created by <b> Krittika Ghosh</b>
+        </div>
+    """, unsafe_allow_html=True)
 
 
 
