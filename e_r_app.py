@@ -236,7 +236,7 @@ else:
 
 # --- Q&A Section ---
 st.markdown("---")
-st.markdown("<h3 style='color:#6a0dad;'>👥 InsightPulse 📈</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#6a0dad;'>Ask 👥 InsightPulse 📈</h3>", unsafe_allow_html=True)
 st.markdown("<p style='color:#444;'>Got questions about the employee data? Ask anything below!</p>", unsafe_allow_html=True)
 
 sample_questions = [
