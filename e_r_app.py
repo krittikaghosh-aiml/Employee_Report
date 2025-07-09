@@ -358,8 +358,12 @@ def answer_from_csv(question, df):
     elif "names of all employees" in question or "list of employees" in question:
         if 'Name' not in df.columns:
             return "❌ 'Name' column not found in dataset."
-        names = df['Name'].dropna().tolist()
-        return "The names of all the employees in the dataset are:\n\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
+
+    names = df['Name'].dropna().astype(str).unique().tolist()
+    return (
+        "The names of all the employees in the dataset are:\n\n" +
+        "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
+    )
 
     elif "best performing department" in question:
         group = df.groupby('Department')['Performance'].mean()
