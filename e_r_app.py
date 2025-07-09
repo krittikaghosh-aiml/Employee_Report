@@ -45,6 +45,13 @@ st.markdown("""
         70% { box-shadow: 0 0 0 10px rgba(106, 13, 173, 0); }
         100% { box-shadow: 0 0 0 0 rgba(106, 13, 173, 0); }
     }
+    
+    </style>
+""", unsafe_allow_html=True)
+
+# ========= FOOTER (ALWAYS VISIBLE) ==========
+st.markdown("""
+    <style>
     .footer-left-animated {
         position: fixed;
         bottom: 0;
@@ -62,19 +69,29 @@ st.markdown("""
         gap: 8px;
     }
 
-    .emoji { animation: bounce 1.5s infinite; font-size: 18px; }
-    </style>
-""", unsafe_allow_html=True)
+    @keyframes glow {
+        0% { box-shadow: 0 0 5px #6a0dad; }
+        50% { box-shadow: 0 0 20px #6a0dad; }
+        100% { box-shadow: 0 0 5px #6a0dad; }
+    }
 
-# ========= FOOTER (ALWAYS VISIBLE) ==========
-st.markdown("""
+    .emoji {
+        animation: bounce 1.5s infinite;
+        font-size: 18px;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    </style>
+
     <div class="footer-left-animated">
         <span class="emoji">👩‍💻</span>
-        Created by <b> Krittika Ghosh</b>
+        Created by <b>Krittika Ghosh</b>
     </div>
 """, unsafe_allow_html=True)
-    </style>
-""", unsafe_allow_html=True)
+
 
 
 
