@@ -248,6 +248,19 @@ def answer_from_csv(question, df):
             "The names of all the employees in the dataset are:\n\n" +
             "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
         )
+    elif "names of female employees" in question or "female employees" in question:
+        females = df[df['Gender'].str.lower() == 'female']['Name'].dropna().unique().tolist()
+        return (
+            "The names of all the female employees are:\n\n" +
+            "\n".join([f"{i+1}. {name}" for i, name in enumerate(females)])
+        )
+
+    elif "names of male employees" in question or "male employees" in question:
+        males = df[df['Gender'].str.lower() == 'male']['Name'].dropna().unique().tolist()
+        return (
+            "The names of all the male employees are:\n\n" +
+            "\n".join([f"{i+1}. {name}" for i, name in enumerate(males)])
+        )
 
     elif "best performing department" in question:
         group = df.groupby('Department')['Performance'].mean()
@@ -263,6 +276,7 @@ def answer_from_csv(question, df):
     elif "gender-wise performance" in question:
         group = df.groupby('Gender')['Performance'].mean().round(2)
         return '\n'.join([f"{gender}: {score}" for gender, score in group.items()])
+    
 
     return None
 
