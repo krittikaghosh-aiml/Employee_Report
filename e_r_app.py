@@ -336,7 +336,7 @@ def answer_from_csv(question, df):
 
     elif "gender distribution" in question:
         counts = df['Gender'].value_counts()
-        return ', '.join([f"{gender}: {count}" for gender, count in counts.items()])
+        return '\n'.join([f"{gender}: {count}" for gender, count in counts.items()])
 
     elif "most experienced department" in question or "most experienced employees" in question:
         df['Experience (Years)'] = pd.to_numeric(df['Experience (Years)'], errors='coerce')
@@ -356,8 +356,10 @@ def answer_from_csv(question, df):
         return result
 
     elif "names of all employees" in question or "list of employees" in question:
+        if 'Name' not in df.columns:
+            return "❌ 'Name' column not found in dataset."
         names = df['Name'].dropna().tolist()
-        return "👥 Employees:\n" + ", ".join(names)
+        return "The names of all the employees in the dataset are:\n\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(names)])
 
     elif "best performing department" in question:
         group = df.groupby('Department')['Performance'].mean()
@@ -368,22 +370,20 @@ def answer_from_csv(question, df):
         df['Attendance (%)'] = pd.to_numeric(df['Attendance (%)'], errors='coerce')
         df['LeavesTaken'] = pd.to_numeric(df['LeavesTaken'], errors='coerce')
         active = df.sort_values(by=['LeavesTaken', 'Attendance (%)'], ascending=[True, False]).head(3)
-        return "🏆 Most active employees:\n" + ", ".join(active['Name'].tolist())
+        return "🏆 Most active employees:\n" + "\n".join([f"{i+1}. {name}" for i, name in enumerate(active['Name'])])
 
     elif "gender-wise performance" in question:
         group = df.groupby('Gender')['Performance'].mean().round(2)
         return '\n'.join([f"{gender}: {score}" for gender, score in group.items()])
 
-    return None  # fallback to LLM
-
+    return None  # fallback to GPT
 
 # Q & A
 if ask and user_question.strip() != "":
     with st.spinner("Analyzing data..."):
-        # Try answering from CSV
         answer = answer_from_csv(user_question, df)
 
-        # If CSV-based function fails to recognize
+        # GPT fallback only if CSV logic fails (None)
         if answer is None:
             try:
                 gpt_response = openai.chat.completions.create(
@@ -399,6 +399,7 @@ if ask and user_question.strip() != "":
 
         st.success("✅ Answer:")
         st.markdown(f"<div style='background-color: #f3e8ff; padding: 15px; border-radius: 10px; white-space: pre-wrap;'><b>{answer}</b></div>", unsafe_allow_html=True)
+
 
 
 
