@@ -384,7 +384,7 @@ if ask and user_question.strip() != "":
         answer = answer_from_csv(user_question, df)
 
         # If CSV-based function fails to recognize
-        if "❓" in answer or "❌" in answer:
+        if answer is None:
             try:
                 gpt_response = openai.chat.completions.create(
                     model="gpt-3.5-turbo",
