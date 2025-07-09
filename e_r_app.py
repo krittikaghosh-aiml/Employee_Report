@@ -236,7 +236,7 @@ else:
 
 # --- Q&A Section ---
 st.markdown("---")
-st.markdown("<h3 style='color:#6a0dad;'>🤖 Ask InsightPulse</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='color:#6a0dad;'>👥 InsightPulse 📈</h3>", unsafe_allow_html=True)
 st.markdown("<p style='color:#444;'>Got questions about the employee data? Ask anything below!</p>", unsafe_allow_html=True)
 
 sample_questions = [
@@ -248,7 +248,11 @@ sample_questions = [
 ]
 selected_question = st.selectbox("💡 Sample Questions (or ask your own below)", options=[""] + sample_questions)
 user_question = st.text_input("Your Question", value=selected_question if selected_question else "")
-ask = st.button("🔍 Ask", key="ask_button", type="primary")
+# ASK BUTTON
+ask_cols = st.columns([3, 1, 3])
+with ask_cols[1]:
+    ask = st.button("🔍 Ask", key="ask_button", type="primary")
+
 
 def answer_from_csv(question, df):
     question = question.lower()
